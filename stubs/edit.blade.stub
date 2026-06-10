@@ -1,0 +1,11 @@
+@extends('layouts.app')
+
+@section('content')
+<h1>Edit {{ Name }}</h1>
+<form action="{{ route('{{ plural_route_name }}.update', $item->id) }}" method="POST">
+    @csrf
+    @method('PUT')
+{{ form_fields }}
+    <button type="submit" class="btn btn-success">Update</button>
+</form>
+@endsection

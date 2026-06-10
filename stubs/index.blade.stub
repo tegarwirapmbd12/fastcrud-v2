@@ -1,0 +1,32 @@
+@extends('layouts.app')
+
+@section('content')
+<h1>{{ Name }} List</h1>
+<a href="{{ route('{{ plural_route_name }}.create') }}" class="btn btn-primary mb-3">Create New {{ Name }}</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+{{ table_headers }}
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach ($items as $item)
+        <tr>
+            <td>{{ $item->id }}</td>
+{{ table_data }}
+            <td>
+                <a href="{{ route('{{ plural_route_name }}.show', $item->id) }}" class="btn btn-info">Show</a>
+                <a href="{{ route('{{ plural_route_name }}.edit', $item->id) }}" class="btn btn-warning">Edit</a>
+                <form action="{{ route('{{ plural_route_name }}.destroy', $item->id) }}" method="POST" style="display:inline">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+@endsection
