@@ -49,7 +49,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "tgrwirapmbd\\CRUDGenerator\\CrudServiceProvider"
+                "Tgrwirapmbd\\CRUDGenerator\\CrudServiceProvider"
             ]
         }
     },
