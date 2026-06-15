@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tgrwirapmbd\CRUDGenerator\Tests;
 
-use Tgrwirapmbd\CRUDGenerator\CrudServiceProvider;
 use Orchestra\Testbench\TestCase as Testbench;
+use Tgrwirapmbd\CRUDGenerator\CrudServiceProvider;
 
 abstract class TestCase extends Testbench
 {

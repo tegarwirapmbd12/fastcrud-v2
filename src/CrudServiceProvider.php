@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tgrwirapmbd\CRUDGenerator;
 
-use Tgrwirapmbd\CRUDGenerator\Commands\MakeCrud;
 use Illuminate\Support\ServiceProvider;
+use Tgrwirapmbd\CRUDGenerator\Commands\MakeCrud;
 
 class CrudServiceProvider extends ServiceProvider
 {

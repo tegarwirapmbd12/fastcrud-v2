@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Tgrwirapmbd\CRUDGenerator\Commands\MakeCrud;
 use Illuminate\Support\Facades\Artisan;
+use Tgrwirapmbd\CRUDGenerator\Commands\MakeCrud;
 
 it('can generate crud with model name only', function (): void {
     Artisan::call('make:crud', ['name' => 'TestPost', '--fields' => 'title:string,content:text']);
