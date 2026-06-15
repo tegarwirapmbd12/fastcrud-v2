@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use AmdadulHaq\CRUDGenerator\Commands\MakeCrud;
+use Tgrwirapmbd\CRUDGenerator\Commands\MakeCrud;
 use Illuminate\Support\Facades\Artisan;
 
 it('can generate crud with model name only', function (): void {

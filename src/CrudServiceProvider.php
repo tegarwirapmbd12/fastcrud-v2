@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AmdadulHaq\CRUDGenerator;
+namespace Tgrwirapmbd\CRUDGenerator;
 
-use AmdadulHaq\CRUDGenerator\Commands\MakeCrud;
+use Tgrwirapmbd\CRUDGenerator\Commands\MakeCrud;
 use Illuminate\Support\ServiceProvider;
 
 class CrudServiceProvider extends ServiceProvider

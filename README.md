@@ -1,9 +1,9 @@
 # CRUD Generator for Laravel
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/amdadulhaq/crud-generator-laravel.svg?style=flat-square)](https://packagist.org/packages/amdadulhaq/crud-generator-laravel)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/amdadulhaq/crud-generator-laravel/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/amdad121/crud-generator-laravel/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/tgrwirapmbd/crud-generator-laravel.svg?style=flat-square)](https://packagist.org/packages/tgrwirapmbd/crud-generator-laravel)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/tgrwirapmbd/crud-generator-laravel/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/amdad121/crud-generator-laravel/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/amdad121/crud-generator-laravel/lint.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/amdad121/crud-generator-laravel/actions?query=workflow%3A"Fix+Code+Style"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/amdadulhaq/crud-generator-laravel.svg?style=flat-square)](https://packagist.org/packages/amdadulhaq/crud-generator-laravel)
+[![Total Downloads](https://img.shields.io/packagist/dt/tgrwirapmbd/crud-generator-laravel.svg?style=flat-square)](https://packagist.org/packages/tgrwirapmbd/crud-generator-laravel)
 
 ## Overview
 
@@ -27,7 +27,7 @@ The **CRUD Generator** package for Laravel is a command-line tool that helps you
 1. **Install the package via Composer**:
 
     ```bash
-    composer require amdadulhaq/crud-generator-laravel
+    composer require tgrwirapmbd/crud-generator-laravel
     ```
 
 2. **Register the Service Provider (if not using auto-discovery)**:
@@ -35,7 +35,7 @@ The **CRUD Generator** package for Laravel is a command-line tool that helps you
     In config/app.php, add the service provider to the providers array:
 
     ```php
-    AmdadulHaq\CRUDGenerator\CrudServiceProvider::class,
+    Tgrwirapmbd\CRUDGenerator\CrudServiceProvider::class,
     ```
 
 3. **Publish the configuration file (optional)**:
@@ -43,7 +43,7 @@ The **CRUD Generator** package for Laravel is a command-line tool that helps you
     You can publish the configuration file to customize the package behavior:
 
     ```bash
-    php artisan vendor:publish --provider="AmdadulHaq\CRUDGenerator\CrudServiceProvider"
+    php artisan vendor:publish --provider="Tgrwirapmbd\CRUDGenerator\CrudServiceProvider"
     ```
 
     This will create a crud_generator.php file in your config directory.

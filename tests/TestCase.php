@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace AmdadulHaq\CRUDGenerator\Tests;
+namespace Tgrwirapmbd\CRUDGenerator\Tests;
 
-use AmdadulHaq\CRUDGenerator\CrudServiceProvider;
+use Tgrwirapmbd\CRUDGenerator\CrudServiceProvider;
 use Orchestra\Testbench\TestCase as Testbench;
 
 abstract class TestCase extends Testbench

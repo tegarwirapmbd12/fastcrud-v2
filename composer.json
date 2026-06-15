@@ -1,10 +1,10 @@
 {
-    "name": "amdadulhaq/crud-generator-laravel",
+    "name": "tgrwirapmbd/crud-generator-laravel",
     "description": "A package to generate CRUD operations easily.",
     "authors": [
         {
-            "name": "Amdadul Haq",
-            "email": "amdadulhaq781@gmail.com"
+            "name": "Tegar Pambudi",
+            "email": "tgrwirapmbd12@gmail.com"
         }
     ],
     "license": "MIT",
@@ -22,12 +22,12 @@
     },
     "autoload": {
         "psr-4": {
-            "AmdadulHaq\\CRUDGenerator\\": "src/"
+            "Tgrwirapmbd\\CRUDGenerator\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "AmdadulHaq\\CRUDGenerator\\Tests\\": "tests/"
+            "Tgrwirapmbd\\CRUDGenerator\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -49,7 +49,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "AmdadulHaq\\CRUDGenerator\\CrudServiceProvider"
+                "tgrwirapmbd\\CRUDGenerator\\CrudServiceProvider"
             ]
         }
     },

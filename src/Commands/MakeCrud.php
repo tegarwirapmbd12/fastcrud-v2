@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AmdadulHaq\CRUDGenerator\Commands;
+namespace Tgrwirapmbd\CRUDGenerator\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\SoftDeletes;
