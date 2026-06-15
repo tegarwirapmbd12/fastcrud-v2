@@ -12,6 +12,7 @@ The **CRUD Generator** package for Laravel is a command-line tool that helps you
 ## Features
 
 -   Generate models with fillable properties.
+-   Generate repositories with basic CRUD methods.
 -   Create migration files with specified fields.
 -   Generate controllers with all necessary CRUD methods.
 -   Create Blade views for listing, creating, editing, and showing model instances.
@@ -83,6 +84,8 @@ The command will create the following files:
 
 **Model**: `app/Models/Post.php`
 
+**Repository**: `app/Repositories/PostRepository.php`
+
 **Migration**: `database/migrations/YYYY_MM_DD_HHMMSS_create_posts_table.php`
 
 **Controller**: `app/Http/Controllers/PostController.php`
@@ -105,13 +108,15 @@ You can customize the behavior of the CRUD generator by modifying the `config/cr
 
 `generate_model`: Generate a model (default: true).
 
+`generate_repository`: Generate a repository (default: true).
+
 `generate_migration`: Generate a migration (default: true).
 
 `generate_controller`: Generate a controller (default: true).
 
 `generate_blade`: Generate Blade views (default: true).
 
-`generate_route`: Add resource routes (default: true).
+`generate_routes`: Add resource routes (default: true).
 
 ## License
 

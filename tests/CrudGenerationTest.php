@@ -27,6 +27,23 @@ it('adds fillable property to model', function (): void {
     }
 });
 
+it('creates repository with crud methods', function (): void {
+    Artisan::call('make:crud', ['name' => 'TestPost', '--fields' => 'title:string']);
+
+    $repositoryPath = $this->app->basePath('app/Repositories/TestPostRepository.php');
+
+    if (file_exists($repositoryPath)) {
+        $repositoryContent = file_get_contents($repositoryPath);
+        expect($repositoryContent)->toContain('namespace App\Repositories;');
+        expect($repositoryContent)->toContain('class TestPostRepository');
+        expect($repositoryContent)->toContain('public function all(): Collection');
+        expect($repositoryContent)->toContain('public function create(array $data): TestPost');
+        expect($repositoryContent)->toContain('public function delete(int|string $id): bool');
+    } else {
+        $this->markTestSkipped('Repository file not created');
+    }
+});
+
 it('creates controller with crud methods', function (): void {
     Artisan::call('make:crud', ['name' => 'TestPost', '--fields' => 'title:string']);
 

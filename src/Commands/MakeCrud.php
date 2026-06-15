@@ -81,6 +81,10 @@ class MakeCrud extends Command
             }
         }
 
+        if (config('crud_generator.generate_repository', true)) {
+            $this->createRepository($name);
+        }
+
         if (config('crud_generator.generate_migration', true)) {
             $this->updateMigrationFile($name, $migrationFields);
         }
@@ -251,6 +255,73 @@ class MakeCrud extends Command
                 file_put_contents($modelFile, $modelContent);
             }
         }
+    }
+
+    protected function createRepository(string $name): void
+    {
+        $repositoryDirectory = app_path('Repositories');
+
+        if (! is_dir($repositoryDirectory)) {
+            mkdir($repositoryDirectory, 0755, true);
+        }
+
+        $repositoryFile = $repositoryDirectory.'/'.$name.'Repository.php';
+
+        if (file_exists($repositoryFile)) {
+            $this->warn(sprintf('Repository for %s already exists.', $name));
+
+            return;
+        }
+
+        $repositoryContent = str_replace(
+            '{{ name }}',
+            $name,
+            <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace App\Repositories;
+
+use App\Models\{{ name }};
+use Illuminate\Database\Eloquent\Collection;
+
+class {{ name }}Repository
+{
+    public function all(): Collection
+    {
+        return {{ name }}::all();
+    }
+
+    public function find(int|string $id): {{ name }}
+    {
+        return {{ name }}::findOrFail($id);
+    }
+
+    public function create(array $data): {{ name }}
+    {
+        return {{ name }}::create($data);
+    }
+
+    public function update(int|string $id, array $data): {{ name }}
+    {
+        $item = $this->find($id);
+        $item->update($data);
+
+        return $item;
+    }
+
+    public function delete(int|string $id): bool
+    {
+        return (bool) $this->find($id)->delete();
+    }
+}
+PHP
+        );
+
+        file_put_contents($repositoryFile, $repositoryContent);
+
+        $this->info(sprintf('Repository for %s created successfully.', $name));
     }
 
     protected function createBladeViews(string $name, string $fields): void
