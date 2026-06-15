@@ -58,6 +58,20 @@ it('creates controller with crud methods', function (): void {
     }
 });
 
+it('adds a sidebar navigation item with lucide icon', function (): void {
+    Artisan::call('make:crud', ['name' => 'TestPost', '--fields' => 'title:string']);
+
+    $layoutPath = $this->app->basePath('resources/views/layouts/app.blade.php');
+
+    if (file_exists($layoutPath)) {
+        $layoutContent = file_get_contents($layoutPath);
+        expect($layoutContent)->toContain('data-lucide="book-open-text"');
+        expect($layoutContent)->toContain('Test Posts');
+    } else {
+        $this->markTestSkipped('Layout file not created');
+    }
+});
+
 it('parses fields correctly', function (): void {
     $command = new MakeCrud;
     $reflection = new ReflectionClass($command);

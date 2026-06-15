@@ -356,7 +356,75 @@ PHP
             copy($stubPath.'app.blade.stub', $layoutsDirectory.'/app.blade.php');
         }
 
+        $this->updateAppLayout($name);
+
         $this->info(sprintf('Blade views for %s created successfully.', $name));
+    }
+
+    protected function updateAppLayout(string $name): void
+    {
+        $layoutFile = resource_path('views/layouts/app.blade.php');
+
+        if (! file_exists($layoutFile)) {
+            return;
+        }
+
+        $sidebarLabel = $this->getSidebarLabel($name);
+        $sidebarIcon = $this->getSidebarIcon($name);
+        $routeName = Str::pluralStudly(Str::snake($name));
+        $menuItem = sprintf(
+            '                <li class="nav-item"><a class="nav-link d-flex align-items-center gap-2" href="{{ route(\'%s.index\') }}"><i data-lucide="%s"></i><span>%s</span></a></li>',
+            $routeName,
+            $sidebarIcon,
+            $sidebarLabel
+        );
+
+        $layoutContent = file_get_contents($layoutFile);
+
+        if (str_contains($layoutContent, $menuItem)) {
+            return;
+        }
+
+        if (str_contains($layoutContent, '<!-- sidebar-items -->')) {
+            $layoutContent = str_replace('<!-- sidebar-items -->', $menuItem."\n                <!-- sidebar-items -->", $layoutContent);
+        } elseif (str_contains($layoutContent, '</ul>')) {
+            $layoutContent = str_replace('</ul>', $menuItem."\n            </ul>", $layoutContent);
+        } else {
+            $layoutContent .= "\n".$menuItem."\n";
+        }
+
+        file_put_contents($layoutFile, $layoutContent);
+    }
+
+    protected function getSidebarLabel(string $name): string
+    {
+        $pluralName = Str::plural(Str::snake($name));
+
+        return ucwords(str_replace('_', ' ', $pluralName));
+    }
+
+    protected function getSidebarIcon(string $name): string
+    {
+        $iconMap = [
+            'user' => 'users',
+            'post' => 'book-open-text',
+            'article' => 'file-text',
+            'product' => 'package',
+            'order' => 'shopping-cart',
+            'setting' => 'settings',
+            'dashboard' => 'layout-dashboard',
+            'category' => 'folder',
+        ];
+
+        $normalizedName = Str::snake($name);
+
+        foreach ($iconMap as $keyword => $icon) {
+            if (str_contains($normalizedName, $keyword)) {
+                return $icon;
+            }
+        }
+
+        return 'book-open-text';
     }
 
     protected function generateViewFromStub(string $stubPath, string $targetPath, array $replacements, array $fields): void

@@ -4,10 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', '{{ config('app.name') }}')</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    <div class="container mt-5">
-        @yield('content')
+    <div class="d-flex min-vh-100">
+        <aside class="border-end p-3" style="width: 260px;">
+            <h5 class="mb-3">CRUD Menu</h5>
+            <ul class="nav flex-column gap-2">
+                <!-- sidebar-items -->
+            </ul>
+        </aside>
+
+        <main class="flex-grow-1 p-4">
+            @yield('content')
+        </main>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        });
+    </script>
 </body>
 </html>
