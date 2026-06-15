@@ -28,7 +28,7 @@ The **CRUD Generator** package for Laravel is a command-line tool that helps you
 1. **Install the package via Composer**:
 
     ```bash
-    composer require tgrwirapmbd/crud-generator-laravel
+    composer require tgrwirapmbd/crud-generator-laravel:@dev
     ```
 
 2. **Register the Service Provider (if not using auto-discovery)**:
