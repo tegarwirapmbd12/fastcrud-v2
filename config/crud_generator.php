@@ -9,6 +9,8 @@ return [
     'generate_controller' => true,
     'generate_routes' => true,
     'generate_blade' => true,
+    'generate_sidenav' => true,
+    'sidenav_default_icon' => 'book-open-text',
     'soft_deletes' => false,
     'api_controller' => false,
     // Rules containing "nullable" will also generate nullable migration columns.

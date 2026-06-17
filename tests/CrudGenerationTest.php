@@ -72,6 +72,25 @@ it('adds a sidebar navigation item with lucide icon', function (): void {
     }
 });
 
+it('adds a sidebar navigation item with custom label and lucide icon', function (): void {
+    Artisan::call('make:crud', [
+        'name' => 'ProductCategory',
+        '--fields' => 'name:string',
+        '--sidenav-name' => 'Product Category',
+        '--sidenav-icon' => 'package',
+    ]);
+
+    $layoutPath = $this->app->basePath('resources/views/layouts/app.blade.php');
+
+    if (file_exists($layoutPath)) {
+        $layoutContent = file_get_contents($layoutPath);
+        expect($layoutContent)->toContain('data-lucide="package"');
+        expect($layoutContent)->toContain('<span>Product Category</span>');
+    } else {
+        $this->markTestSkipped('Layout file not created');
+    }
+});
+
 it('parses fields correctly', function (): void {
     $command = new MakeCrud;
     $reflection = new ReflectionClass($command);

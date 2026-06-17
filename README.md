@@ -54,13 +54,15 @@ The **CRUD Generator** package for Laravel is a command-line tool that helps you
 To generate CRUD resources, use the following Artisan command:
 
 ```bash
-php artisan make:crud {name} {--fields=}
+php artisan make:crud {name} {--fields=} {--sidenav-name=} {--sidenav-icon=}
 ```
 
 ### Parameters
 
 {name} (optional): The name of the model you want to create.
 {--fields=} (optional): A comma-separated list of fields for the model, in the format fieldName:fieldType. Add `:nullable` to make one generated migration column nullable.
+{--sidenav-name=} (optional): Custom sidebar navigation label.
+{--sidenav-icon=} (optional): Custom sidebar icon name from [Lucide Icons](https://lucide.dev/icons).
 
 ### Example
 
@@ -76,7 +78,13 @@ php artisan make:crud {name} {--fields=}
     php artisan make:crud Post --fields="title:string,subtitle:string:nullable,content:text"
     ```
 
-2. **If you do not provide the --fields option, you will be prompted to enter fields interactively**:
+2. **Generate a CRUD setup with a custom sidenav label and Lucide icon**:
+
+    ```bash
+    php artisan make:crud ProductCategory --fields="name:string" --sidenav-name="Product Category" --sidenav-icon="package"
+    ```
+
+3. **If you do not provide the --fields option, you will be prompted to enter fields interactively**:
 
     ```bash
     php artisan make:crud
@@ -121,6 +129,10 @@ You can customize the behavior of the CRUD generator by modifying the `config/cr
 `generate_controller`: Generate a controller (default: true).
 
 `generate_blade`: Generate Blade views (default: true).
+
+`generate_sidenav`: Add a generated sidebar navigation item to the app layout (default: true).
+
+`sidenav_default_icon`: Default Lucide icon when no custom icon is provided (default: book-open-text).
 
 `generate_routes`: Add resource routes (default: true).
 

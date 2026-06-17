@@ -21,7 +21,12 @@ class MakeCrud extends Command
      *
      * @var string
      */
-    protected $signature = 'make:crud {name?} {--fields=} {--api}';
+    protected $signature = 'make:crud
+        {name? : The model name}
+        {--fields= : Comma-separated fields in fieldName:fieldType format}
+        {--api : Generate API controller}
+        {--sidenav-name= : Custom sidebar navigation label}
+        {--sidenav-icon= : Lucide icon name for the sidebar navigation item}';
 
     /**
      * The console command description.
@@ -52,6 +57,7 @@ class MakeCrud extends Command
     public function handle(): void
     {
         $name = $this->argument('name');
+        $shouldPromptForSidenav = empty($name);
 
         if (! $name) {
             $name = text(
@@ -61,6 +67,7 @@ class MakeCrud extends Command
         }
 
         $fields = $this->option('fields');
+        $shouldPromptForSidenav = $shouldPromptForSidenav || empty($fields);
 
         if (empty($fields)) {
             $fields = $this->askForFields();
@@ -101,7 +108,16 @@ class MakeCrud extends Command
         }
 
         if (config('crud_generator.generate_blade', true)) {
-            $this->createBladeViews($name, $fields);
+            $sidenav = [
+                'name' => $this->getSidebarLabel($name),
+                'icon' => $this->getSidebarIcon($name),
+            ];
+
+            if (config('crud_generator.generate_sidenav', true)) {
+                $sidenav = $this->resolveSidenavOptions($name, $shouldPromptForSidenav);
+            }
+
+            $this->createBladeViews($name, $fields, $sidenav);
         }
 
         if (config('crud_generator.generate_routes', true)) {
@@ -332,7 +348,7 @@ PHP
         $this->info(sprintf('Repository for %s created successfully.', $name));
     }
 
-    protected function createBladeViews(string $name, string $fields): void
+    protected function createBladeViews(string $name, string $fields, array $sidenav): void
     {
         $fieldsArray = $this->parseFields($fields);
         $viewsDirectory = resource_path('views/'.Str::snake($name));
@@ -364,12 +380,46 @@ PHP
             copy($stubPath.'app.blade.stub', $layoutsDirectory.'/app.blade.php');
         }
 
-        $this->updateAppLayout($name);
+        if (config('crud_generator.generate_sidenav', true)) {
+            $this->updateAppLayout($name, $sidenav['name'], $sidenav['icon']);
+        }
 
         $this->info(sprintf('Blade views for %s created successfully.', $name));
     }
 
-    protected function updateAppLayout(string $name): void
+    protected function resolveSidenavOptions(string $name, bool $shouldPrompt): array
+    {
+        $defaultName = $this->getSidebarLabel($name);
+        $defaultIcon = $this->getSidebarIcon($name);
+
+        $sidenavName = $this->option('sidenav-name');
+        $sidenavIcon = $this->option('sidenav-icon');
+
+        if ($shouldPrompt && empty($sidenavName)) {
+            $sidenavName = text(
+                label: 'Nama Sidenav',
+                placeholder: $defaultName,
+                default: $defaultName,
+                validate: ['sidenav_name' => 'required|max:255']
+            );
+        }
+
+        if ($shouldPrompt && empty($sidenavIcon)) {
+            $sidenavIcon = text(
+                label: 'Nama Icon',
+                placeholder: $defaultIcon,
+                default: $defaultIcon,
+                hint: 'Gunakan nama icon dari https://lucide.dev/icons'
+            );
+        }
+
+        return [
+            'name' => $this->normalizeSidenavName($sidenavName, $defaultName),
+            'icon' => $this->normalizeLucideIconName($sidenavIcon, $defaultIcon),
+        ];
+    }
+
+    protected function updateAppLayout(string $name, string $sidenavName, string $sidenavIcon): void
     {
         $layoutFile = resource_path('views/layouts/app.blade.php');
 
@@ -377,8 +427,8 @@ PHP
             return;
         }
 
-        $sidebarLabel = $this->getSidebarLabel($name);
-        $sidebarIcon = $this->getSidebarIcon($name);
+        $sidebarLabel = htmlspecialchars($sidenavName, ENT_QUOTES, 'UTF-8');
+        $sidebarIcon = htmlspecialchars($sidenavIcon, ENT_QUOTES, 'UTF-8');
         $routeName = Str::pluralStudly(Str::snake($name));
         $menuItem = sprintf(
             '                <li class="nav-item"><a class="nav-link d-flex align-items-center gap-2" href="{{ route(\'%s.index\') }}"><i data-lucide="%s"></i><span>%s</span></a></li>',
@@ -389,7 +439,7 @@ PHP
 
         $layoutContent = file_get_contents($layoutFile);
 
-        if (str_contains($layoutContent, $menuItem)) {
+        if (str_contains($layoutContent, sprintf("route('%s.index')", $routeName))) {
             return;
         }
 
@@ -432,7 +482,25 @@ PHP
             }
         }
 
-        return 'book-open-text';
+        return config('crud_generator.sidenav_default_icon', 'book-open-text');
+    }
+
+    protected function normalizeSidenavName(mixed $sidenavName, string $fallback): string
+    {
+        $sidenavName = trim((string) $sidenavName);
+
+        return $sidenavName !== '' ? $sidenavName : $fallback;
+    }
+
+    protected function normalizeLucideIconName(mixed $sidenavIcon, string $fallback): string
+    {
+        $sidenavIcon = strtolower(trim((string) $sidenavIcon));
+        $sidenavIcon = str_replace(['_', ' '], '-', $sidenavIcon);
+        $sidenavIcon = preg_replace('/[^a-z0-9-]/', '', $sidenavIcon) ?: '';
+        $sidenavIcon = preg_replace('/-+/', '-', $sidenavIcon) ?: '';
+        $sidenavIcon = trim($sidenavIcon, '-');
+
+        return $sidenavIcon !== '' ? $sidenavIcon : $fallback;
     }
 
     protected function generateViewFromStub(string $stubPath, string $targetPath, array $replacements, array $fields): void
