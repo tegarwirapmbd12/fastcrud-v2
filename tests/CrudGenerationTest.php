@@ -77,14 +77,15 @@ it('parses fields correctly', function (): void {
     $reflection = new ReflectionClass($command);
     $method = $reflection->getMethod('parseFields');
 
-    $fields = 'title:string,content:text,author_id:integer';
+    $fields = 'title:string,content:text,author_id:integer,subtitle:string:nullable';
     $parsed = $method->invoke($command, $fields);
 
     expect($parsed)->toBeArray();
-    expect($parsed)->toHaveCount(3);
+    expect($parsed)->toHaveCount(4);
     expect($parsed[0])->toMatchArray(['name' => 'title', 'type' => 'string']);
     expect($parsed[1])->toMatchArray(['name' => 'content', 'type' => 'text']);
     expect($parsed[2])->toMatchArray(['name' => 'author_id', 'type' => 'integer']);
+    expect($parsed[3])->toMatchArray(['name' => 'subtitle', 'type' => 'string', 'nullable' => true]);
 });
 
 it('generates migration fields correctly', function (): void {
@@ -92,11 +93,12 @@ it('generates migration fields correctly', function (): void {
     $reflection = new ReflectionClass($command);
     $method = $reflection->getMethod('generateMigrationFields');
 
-    $fields = 'title:string,content:text';
+    $fields = 'title:string,content:text,subtitle:string:nullable';
     $result = $method->invoke($command, $fields);
 
     expect($result)->toContain('$table->string(\'title\')');
     expect($result)->toContain('$table->text(\'content\')');
+    expect($result)->toContain('$table->string(\'subtitle\')->nullable()');
 });
 
 it('generates validation rules based on field types', function (): void {
@@ -108,6 +110,7 @@ it('generates validation rules based on field types', function (): void {
         ['name' => 'title', 'type' => 'string'],
         ['name' => 'content', 'type' => 'text'],
         ['name' => 'published', 'type' => 'integer'],
+        ['name' => 'subtitle', 'type' => 'string', 'nullable' => true],
     ];
 
     $rules = $method->invoke($command, $fields);
@@ -116,4 +119,17 @@ it('generates validation rules based on field types', function (): void {
     expect($rules['title'])->toBe('required|string|max:255');
     expect($rules['content'])->toBe('required');
     expect($rules['published'])->toBe('required|integer');
+    expect($rules['subtitle'])->toBe('nullable|string|max:255');
+});
+
+it('uses nullable validation config when generating migration fields', function (): void {
+    config(['crud_generator.validation_rules.string' => 'nullable|string|max:255']);
+
+    $command = new MakeCrud;
+    $reflection = new ReflectionClass($command);
+    $method = $reflection->getMethod('generateMigrationFields');
+
+    $result = $method->invoke($command, 'title:string');
+
+    expect($result)->toContain('$table->string(\'title\')->nullable()');
 });

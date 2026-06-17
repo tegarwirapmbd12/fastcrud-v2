@@ -11,10 +11,13 @@ return [
     'generate_blade' => true,
     'soft_deletes' => false,
     'api_controller' => false,
+    // Rules containing "nullable" will also generate nullable migration columns.
+    // Example field syntax for one nullable column: title:string:nullable.
     'validation_rules' => [
         'default' => 'required',
         'string' => 'required|string|max:255',
         'text' => 'required',
+        'longText' => 'required',
         'integer' => 'required|integer',
         'boolean' => 'boolean',
         'date' => 'required|date',

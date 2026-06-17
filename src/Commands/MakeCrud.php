@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
+use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
@@ -32,6 +33,7 @@ class MakeCrud extends Command
     protected array $validColumnTypes = [
         'string',
         'text',
+        'longText',
         'integer',
         'bigInteger',
         'smallInteger',
@@ -125,10 +127,17 @@ class MakeCrud extends Command
 
             // Prompt to select the field type from the options
             $fieldType = select('Select field type', $this->validColumnTypes);
+            $isNullable = confirm(label: 'Should this field be nullable?', default: false);
 
             // Validate and add the field
             if ($this->validateField($fieldName, $fieldType)) {
-                $fields[] = sprintf('%s:%s', $fieldName, $fieldType);
+                $field = sprintf('%s:%s', $fieldName, $fieldType);
+
+                if ($isNullable) {
+                    $field .= ':nullable';
+                }
+
+                $fields[] = $field;
             }
         }
 
@@ -153,13 +162,12 @@ class MakeCrud extends Command
         $migrationFields = '';
 
         if ($fields !== '' && $fields !== '0') {
-            $fieldArray = explode(',', $fields);
+            foreach ($this->parseFields($fields) as $field) {
+                $fieldName = $field['name'];
+                $fieldType = $field['type'];
+                $nullable = $this->fieldShouldBeNullable($field) ? '->nullable()' : '';
 
-            foreach ($fieldArray as $field) {
-                $fieldParts = explode(':', $field);
-                $fieldName = trim($fieldParts[0]);
-                $fieldType = trim($fieldParts[1] ?? 'string');
-                $migrationFields .= "\$table->{$fieldType}('{$fieldName}');\n            ";
+                $migrationFields .= "\$table->{$fieldType}('{$fieldName}'){$nullable};\n            ";
             }
         }
 
@@ -478,13 +486,29 @@ PHP
     protected function parseFields(string $fields): array
     {
         $parsed = [];
+
+        if ($fields === '' || $fields === '0') {
+            return $parsed;
+        }
+
         $fieldArray = explode(',', $fields);
 
         foreach ($fieldArray as $field) {
+            if (trim($field) === '') {
+                continue;
+            }
+
             $parts = explode(':', $field);
+            $modifiers = array_values(array_filter(array_map(
+                fn (string $modifier): string => strtolower(trim($modifier)),
+                array_slice($parts, 2)
+            )));
+
             $parsed[] = [
                 'name' => trim($parts[0]),
-                'type' => trim($parts[1] ?? 'string'),
+                'type' => trim($parts[1] ?? '') !== '' ? trim($parts[1]) : 'string',
+                'nullable' => in_array('nullable', $modifiers, true),
+                'modifiers' => $modifiers,
             ];
         }
 
@@ -654,15 +678,50 @@ PHP
             $fieldName = $field['name'];
 
             if (isset($configRules[$fieldType])) {
-                $rules[$fieldName] = $configRules[$fieldType];
+                $rule = $configRules[$fieldType];
             } elseif (str_contains((string) $fieldName, 'email')) {
-                $rules[$fieldName] = $configRules['email'] ?? 'required|email';
+                $rule = $configRules['email'] ?? 'required|email';
             } else {
-                $rules[$fieldName] = $defaultRule;
+                $rule = $defaultRule;
             }
+
+            if ($field['nullable'] ?? false) {
+                $rule = $this->makeValidationRuleNullable((string) $rule);
+            }
+
+            $rules[$fieldName] = $rule;
         }
 
         return $rules;
+    }
+
+    protected function fieldShouldBeNullable(array $field): bool
+    {
+        if ($field['nullable'] ?? false) {
+            return true;
+        }
+
+        $fieldName = $field['name'];
+        $validationRules = $this->getValidationRules([$field]);
+
+        return $this->validationRuleContainsNullable((string) ($validationRules[$fieldName] ?? ''));
+    }
+
+    protected function makeValidationRuleNullable(string $rule): string
+    {
+        $rules = array_values(array_filter(
+            array_map('trim', explode('|', $rule)),
+            fn (string $rule): bool => $rule !== '' && $rule !== 'required' && $rule !== 'nullable'
+        ));
+
+        array_unshift($rules, 'nullable');
+
+        return implode('|', $rules);
+    }
+
+    protected function validationRuleContainsNullable(string $rule): bool
+    {
+        return in_array('nullable', array_map('trim', explode('|', $rule)), true);
     }
 
     protected function addResourceRoute(string $name): void

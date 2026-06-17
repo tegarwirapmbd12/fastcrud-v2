@@ -60,7 +60,7 @@ php artisan make:crud {name} {--fields=}
 ### Parameters
 
 {name} (optional): The name of the model you want to create.
-{--fields=} (optional): A comma-separated list of fields for the model, in the format fieldName:fieldType.
+{--fields=} (optional): A comma-separated list of fields for the model, in the format fieldName:fieldType. Add `:nullable` to make one generated migration column nullable.
 
 ### Example
 
@@ -68,6 +68,12 @@ php artisan make:crud {name} {--fields=}
 
     ```bash
     php artisan make:crud Post --fields="title:string,content:text"
+    ```
+
+    To make a specific column nullable:
+
+    ```bash
+    php artisan make:crud Post --fields="title:string,subtitle:string:nullable,content:text"
     ```
 
 2. **If you do not provide the --fields option, you will be prompted to enter fields interactively**:
