@@ -610,7 +610,9 @@ PHP
             $fieldNames = array_map(fn (array $field) => $field['name'], $fieldsArray);
 
             // Read the existing controller content
-            $controllerContent = file_get_contents($controllerFile);
+            $originalControllerContent = (string) file_get_contents($controllerFile);
+            $controllerContent = $this->removeDuplicateControllerMethods($originalControllerContent, ['update']);
+            $duplicateMethodsWereRemoved = $controllerContent !== $originalControllerContent;
 
             // Remove commented-out lines starting with //
             $controllerContent = preg_replace('/^\s*\/\/.*$/m', '', $controllerContent);
@@ -695,20 +697,6 @@ PHP
     }'."\n";
             }
 
-            if (! in_array('update', $existingMethods)) {
-                $newMethods .= '
-    public function update(Request $request, $id)
-    {
-        $validated = $request->validate([
-            '.implode(",\n            ", array_map(fn (string $field): string => sprintf("'%s' => 'required'", $field), $fieldNames)).'
-        ]);
-
-        $item = '.$modelNamespace.'::findOrFail($id);
-        $item->update($validated);
-        return redirect()->route(\''.Str::pluralStudly(Str::snake($name)).'.index\');
-    }'."\n";
-            }
-
             if (! in_array('destroy', $existingMethods)) {
                 $newMethods .= '
     public function destroy($id)
@@ -729,10 +717,95 @@ PHP
                     file_put_contents($controllerFile, $controllerContent);
                     $this->info(sprintf('CRUD methods for %s added to the controller.', $name));
                 }
+            } elseif ($duplicateMethodsWereRemoved) {
+                file_put_contents($controllerFile, $controllerContent);
+                $this->info(sprintf('Duplicate CRUD methods for %s cleaned up in the controller.', $name));
             } else {
                 $this->warn(sprintf('CRUD methods for %s already exist in the controller.', $name));
             }
         }
+    }
+
+    protected function removeDuplicateControllerMethods(string $controllerContent, array $methods): string
+    {
+        foreach ($methods as $method) {
+            while (true) {
+                $methodBlocks = $this->findControllerMethodBlocks($controllerContent, $method);
+
+                if (count($methodBlocks) <= 1) {
+                    break;
+                }
+
+                $duplicateBlock = $methodBlocks[1];
+                $controllerContent = substr_replace(
+                    $controllerContent,
+                    '',
+                    $duplicateBlock['start'],
+                    $duplicateBlock['end'] - $duplicateBlock['start']
+                );
+            }
+        }
+
+        return $controllerContent;
+    }
+
+    protected function findControllerMethodBlocks(string $controllerContent, string $method): array
+    {
+        preg_match_all(
+            '/public\s+function\s+'.preg_quote($method, '/').'\s*\(/',
+            $controllerContent,
+            $matches,
+            PREG_OFFSET_CAPTURE
+        );
+
+        $methodBlocks = [];
+
+        foreach ($matches[0] as $match) {
+            $methodStart = $match[1];
+            $openBrace = strpos($controllerContent, '{', $methodStart);
+
+            if ($openBrace === false) {
+                continue;
+            }
+
+            $closeBrace = $this->findMatchingBrace($controllerContent, $openBrace);
+
+            if ($closeBrace === null) {
+                continue;
+            }
+
+            $lineStart = strrpos(substr($controllerContent, 0, $methodStart), "\n");
+            $blockStart = $lineStart === false ? $methodStart : $lineStart + 1;
+
+            $methodBlocks[] = [
+                'start' => $blockStart,
+                'end' => $closeBrace + 1,
+            ];
+        }
+
+        return $methodBlocks;
+    }
+
+    protected function findMatchingBrace(string $content, int $openBrace): ?int
+    {
+        $depth = 0;
+        $length = strlen($content);
+
+        for ($position = $openBrace; $position < $length; $position++) {
+            if ($content[$position] === '{') {
+                $depth++;
+            }
+
+            if ($content[$position] === '}') {
+                $depth--;
+
+                if ($depth === 0) {
+                    return $position;
+                }
+            }
+        }
+
+        return null;
     }
 
     protected function getValidationRules(array $fields): array

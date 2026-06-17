@@ -53,6 +53,7 @@ it('creates controller with crud methods', function (): void {
         $controllerContent = file_get_contents($controllerPath);
         expect($controllerContent)->toContain('public function index()');
         expect($controllerContent)->toContain('public function store(');
+        expect(substr_count($controllerContent, 'public function update('))->toBe(1);
     } else {
         $this->markTestSkipped('Controller file not created');
     }
