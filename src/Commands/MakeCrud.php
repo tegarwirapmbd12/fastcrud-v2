@@ -421,7 +421,7 @@ PHP
 
     protected function updateAppLayout(string $name, string $sidenavName, string $sidenavIcon): void
     {
-        $layoutFile = resource_path('views/layouts/app.blade.php');
+        $layoutFile = resource_path('views/shared/partials/sidenav.blade.php');
 
         if (! file_exists($layoutFile)) {
             return;
@@ -431,7 +431,12 @@ PHP
         $sidebarIcon = htmlspecialchars($sidenavIcon, ENT_QUOTES, 'UTF-8');
         $routeName = Str::pluralStudly(Str::snake($name));
         $menuItem = sprintf(
-            '                <li class="nav-item"><a class="nav-link d-flex align-items-center gap-2" href="{{ route(\'%s.index\') }}"><i data-lucide="%s"></i><span>%s</span></a></li>',
+            '                <li class="side-nav-item">
+                    <a class="side-nav-link" href="{{ route(\'%s.index\') }}">
+                        <span class="menu-icon"><i data-lucide="%s"></i></span>
+                        <span class="menu-text">%s</span>
+                    </a>
+                </li>',
             $routeName,
             $sidebarIcon,
             $sidebarLabel
@@ -443,12 +448,30 @@ PHP
             return;
         }
 
-        if (str_contains($layoutContent, '<!-- sidebar-items -->')) {
-            $layoutContent = str_replace('<!-- sidebar-items -->', $menuItem."\n                <!-- sidebar-items -->", $layoutContent);
-        } elseif (str_contains($layoutContent, '</ul>')) {
-            $layoutContent = str_replace('</ul>', $menuItem."\n            </ul>", $layoutContent);
+        $marker = '                <!-- crud-generator-sidenav-items -->';
+        $legacyMarker = '                <!-- sidebar-items -->';
+        $customPagesTitle = '                <li class="side-nav-title mt-2" data-lang="custom-pages">Custom Pages</li>';
+
+        if (str_contains($layoutContent, $marker)) {
+            $layoutContent = str_replace($marker, $menuItem."\n".$marker, $layoutContent);
+        } elseif (str_contains($layoutContent, $legacyMarker)) {
+            $layoutContent = str_replace($legacyMarker, $menuItem."\n".$legacyMarker, $layoutContent);
+        } elseif (str_contains($layoutContent, $customPagesTitle)) {
+            $layoutContent = str_replace($customPagesTitle, $menuItem."\n".$customPagesTitle, $layoutContent);
         } else {
-            $layoutContent .= "\n".$menuItem."\n";
+            $closingMenu = '            </ul>';
+            $closingMenuPosition = strrpos($layoutContent, $closingMenu);
+
+            if ($closingMenuPosition === false) {
+                $layoutContent .= "\n".$menuItem."\n";
+            } else {
+                $layoutContent = substr_replace(
+                    $layoutContent,
+                    $menuItem."\n".$closingMenu,
+                    $closingMenuPosition,
+                    strlen($closingMenu)
+                );
+            }
         }
 
         file_put_contents($layoutFile, $layoutContent);
