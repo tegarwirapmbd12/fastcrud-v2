@@ -121,6 +121,52 @@ it('generates migration fields correctly', function (): void {
     expect($result)->toContain('$table->string(\'subtitle\')->nullable()');
 });
 
+it('adds a unique 16 character uuid column after id in migrations', function (): void {
+    $command = new MakeCrud;
+    $reflection = new ReflectionClass($command);
+    $method = $reflection->getMethod('addUuidColumnToMigrationContent');
+
+    $migrationContent = <<<'PHP'
+Schema::create('test_posts', function (Blueprint $table) {
+    $table->id();
+    $table->string('title');
+    $table->timestamps();
+});
+PHP;
+
+    $result = $method->invoke($command, $migrationContent);
+
+    expect($result)->toContain('$table->string(\'uuid\', 16)->unique();');
+    expect(strpos($result, '$table->id();'))->toBeLessThan(strpos($result, '$table->string(\'uuid\', 16)->unique();'));
+    expect(strpos($result, '$table->string(\'uuid\', 16)->unique();'))->toBeLessThan(strpos($result, '$table->string(\'title\');'));
+});
+
+it('adds automatic unique uuid generation to the model', function (): void {
+    $command = new MakeCrud;
+    $reflection = new ReflectionClass($command);
+    $method = $reflection->getMethod('addUuidGenerationToModelContent');
+
+    $modelContent = <<<'PHP'
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class TestPost extends Model
+{
+    protected $fillable = ['title'];
+}
+PHP;
+
+    $result = $method->invoke($command, $modelContent);
+
+    expect($result)->toContain('protected static function booted(): void');
+    expect($result)->toContain('\Illuminate\Support\Str::random(16)');
+    expect($result)->toContain("self::query()->where('uuid', \$uuid)->exists()");
+    expect($result)->toContain('$model->uuid = $uuid;');
+});
+
 it('generates validation rules based on field types', function (): void {
     $command = new MakeCrud;
     $reflection = new ReflectionClass($command);

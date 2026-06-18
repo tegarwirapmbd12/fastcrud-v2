@@ -198,6 +198,7 @@ class MakeCrud extends Command
 
         if (file_exists($migrationFile)) {
             $migrationContent = file_get_contents($migrationFile);
+            $migrationContent = $this->addUuidColumnToMigrationContent((string) $migrationContent);
 
             $softDeletesColumn = '';
             if (config('crud_generator.soft_deletes', false)) {
@@ -224,6 +225,19 @@ class MakeCrud extends Command
         }
     }
 
+    protected function addUuidColumnToMigrationContent(string $migrationContent): string
+    {
+        if (preg_match('/\$table->\w+\([\'"]uuid[\'"]/', $migrationContent) === 1) {
+            return $migrationContent;
+        }
+
+        return str_replace(
+            '$table->id();',
+            "\$table->id();\n            \$table->string('uuid', 16)->unique();",
+            $migrationContent
+        );
+    }
+
     protected function runMigration(string $migrationFile): void
     {
         $this->info('Running migration...');
@@ -243,7 +257,8 @@ class MakeCrud extends Command
         if (file_exists($modelFile)) {
             $fillableFields = implode("', '", array_map(fn ($field): string => trim(explode(':', $field)[0]), explode(',', $fields)));
 
-            $modelContent = file_get_contents($modelFile);
+            $modelContent = (string) file_get_contents($modelFile);
+            $originalModelContent = $modelContent;
 
             if (! preg_match('/protected\s+\$fillable\s*=\s*\[/', $modelContent)) {
                 $modelContent = preg_replace(
@@ -251,9 +266,51 @@ class MakeCrud extends Command
                     'class '.$name.' extends Model {'."\n\n    protected \$fillable = ['{$fillableFields}'];\n",
                     $modelContent
                 );
+            }
+
+            $modelContent = $this->addUuidGenerationToModelContent($modelContent);
+
+            if ($modelContent !== $originalModelContent) {
                 file_put_contents($modelFile, $modelContent);
             }
         }
+    }
+
+    protected function addUuidGenerationToModelContent(string $modelContent): string
+    {
+        if (str_contains($modelContent, '$model->uuid')) {
+            return $modelContent;
+        }
+
+        if (preg_match('/protected\s+static\s+function\s+booted\s*\(/', $modelContent) === 1) {
+            return $modelContent;
+        }
+
+        $uuidGeneration = <<<'PHP'
+
+    protected static function booted(): void
+    {
+        static::creating(function ($model): void {
+            if (! empty($model->uuid)) {
+                return;
+            }
+
+            do {
+                $uuid = \Illuminate\Support\Str::random(16);
+            } while (self::query()->where('uuid', $uuid)->exists());
+
+            $model->uuid = $uuid;
+        });
+    }
+
+PHP;
+        $classEndPos = strrpos($modelContent, '}');
+
+        if ($classEndPos === false) {
+            return $modelContent;
+        }
+
+        return substr_replace($modelContent, $uuidGeneration, $classEndPos, 0);
     }
 
     protected function addSoftDeletesToModel(string $name): void
