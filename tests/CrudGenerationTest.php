@@ -121,7 +121,7 @@ it('generates migration fields correctly', function (): void {
     expect($result)->toContain('$table->string(\'subtitle\')->nullable()');
 });
 
-it('adds a unique 16 character uuid column after id in migrations', function (): void {
+it('adds a unique standard uuid column after id in migrations', function (): void {
     $command = new MakeCrud;
     $reflection = new ReflectionClass($command);
     $method = $reflection->getMethod('addUuidColumnToMigrationContent');
@@ -136,9 +136,9 @@ PHP;
 
     $result = $method->invoke($command, $migrationContent);
 
-    expect($result)->toContain('$table->string(\'uuid\', 16)->unique();');
-    expect(strpos($result, '$table->id();'))->toBeLessThan(strpos($result, '$table->string(\'uuid\', 16)->unique();'));
-    expect(strpos($result, '$table->string(\'uuid\', 16)->unique();'))->toBeLessThan(strpos($result, '$table->string(\'title\');'));
+    expect($result)->toContain('$table->uuid(\'uuid\')->unique();');
+    expect(strpos($result, '$table->id();'))->toBeLessThan(strpos($result, '$table->uuid(\'uuid\')->unique();'));
+    expect(strpos($result, '$table->uuid(\'uuid\')->unique();'))->toBeLessThan(strpos($result, '$table->string(\'title\');'));
 });
 
 it('adds automatic unique uuid generation to the model', function (): void {
@@ -162,7 +162,7 @@ PHP;
     $result = $method->invoke($command, $modelContent);
 
     expect($result)->toContain('protected static function booted(): void');
-    expect($result)->toContain('\Illuminate\Support\Str::random(16)');
+    expect($result)->toContain('(string) \Illuminate\Support\Str::uuid()');
     expect($result)->toContain("self::query()->where('uuid', \$uuid)->exists()");
     expect($result)->toContain('$model->uuid = $uuid;');
 });

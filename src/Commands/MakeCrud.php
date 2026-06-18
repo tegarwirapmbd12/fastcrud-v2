@@ -233,7 +233,7 @@ class MakeCrud extends Command
 
         return str_replace(
             '$table->id();',
-            "\$table->id();\n            \$table->string('uuid', 16)->unique();",
+            "\$table->id();\n            \$table->uuid('uuid')->unique();",
             $migrationContent
         );
     }
@@ -296,7 +296,7 @@ class MakeCrud extends Command
             }
 
             do {
-                $uuid = \Illuminate\Support\Str::random(16);
+                $uuid = (string) \Illuminate\Support\Str::uuid();
             } while (self::query()->where('uuid', $uuid)->exists());
 
             $model->uuid = $uuid;
