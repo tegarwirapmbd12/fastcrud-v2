@@ -421,60 +421,105 @@ PHP
 
     protected function updateAppLayout(string $name, string $sidenavName, string $sidenavIcon): void
     {
-        $layoutFile = resource_path('views/shared/partials/sidenav.blade.php');
+        $layoutFile = $this->resolveSidenavLayoutFile();
 
-        if (! file_exists($layoutFile)) {
+        if ($layoutFile === null) {
+            $this->warn('Sidenav tidak diupdate: file partial sidenav tidak ditemukan. '
+                .'Set config(\'crud_generator.sidenav_path\') agar sesuai struktur project Anda.');
+
+            return;
+        }
+
+        $layoutContent = (string) file_get_contents($layoutFile);
+        $routeName = Str::pluralStudly(Str::snake($name));
+
+        if (str_contains($layoutContent, sprintf("route('%s.index')", $routeName))) {
+            $this->warn(sprintf('Menu sidenav untuk %s sudah ada, dilewati.', $name));
+
             return;
         }
 
         $sidebarLabel = htmlspecialchars($sidenavName, ENT_QUOTES, 'UTF-8');
         $sidebarIcon = htmlspecialchars($sidenavIcon, ENT_QUOTES, 'UTF-8');
-        $routeName = Str::pluralStudly(Str::snake($name));
-        $menuItem = sprintf(
-            '                <li class="side-nav-item">
-                    <a class="side-nav-link" href="{{ route(\'%s.index\') }}">
-                        <span class="menu-icon"><i data-lucide="%s"></i></span>
-                        <span class="menu-text">%s</span>
-                    </a>
-                </li>',
-            $routeName,
-            $sidebarIcon,
-            $sidebarLabel
-        );
+        $indent = $this->detectMenuItemIndent($layoutContent);
 
-        $layoutContent = file_get_contents($layoutFile);
+        $menuItem = $indent."<li class=\"side-nav-item\">\n"
+            .$indent."    <a class=\"side-nav-link\" href=\"{{ route('{$routeName}.index') }}\">\n"
+            .$indent."        <span class=\"menu-icon\"><i data-lucide=\"{$sidebarIcon}\"></i></span>\n"
+            .$indent."        <span class=\"menu-text\">{$sidebarLabel}</span>\n"
+            .$indent."    </a>\n"
+            .$indent.'</li>';
 
-        if (str_contains($layoutContent, sprintf("route('%s.index')", $routeName))) {
-            return;
-        }
+        $updatedContent = $this->insertSidenavMenuItem($layoutContent, $menuItem);
 
-        $marker = '                <!-- crud-generator-sidenav-items -->';
-        $legacyMarker = '                <!-- sidebar-items -->';
-        $customPagesTitle = '                <li class="side-nav-title mt-2" data-lang="custom-pages">Custom Pages</li>';
+        file_put_contents($layoutFile, $updatedContent);
+        $this->info(sprintf('Menu sidenav untuk %s berhasil ditambahkan ke %s.', $name, $layoutFile));
+    }
 
-        if (str_contains($layoutContent, $marker)) {
-            $layoutContent = str_replace($marker, $menuItem."\n".$marker, $layoutContent);
-        } elseif (str_contains($layoutContent, $legacyMarker)) {
-            $layoutContent = str_replace($legacyMarker, $menuItem."\n".$legacyMarker, $layoutContent);
-        } elseif (str_contains($layoutContent, $customPagesTitle)) {
-            $layoutContent = str_replace($customPagesTitle, $menuItem."\n".$customPagesTitle, $layoutContent);
-        } else {
-            $closingMenu = '            </ul>';
-            $closingMenuPosition = strrpos($layoutContent, $closingMenu);
+    protected function resolveSidenavLayoutFile(): ?string
+    {
+        $configuredPath = config('crud_generator.sidenav_path');
 
-            if ($closingMenuPosition === false) {
-                $layoutContent .= "\n".$menuItem."\n";
-            } else {
-                $layoutContent = substr_replace(
-                    $layoutContent,
-                    $menuItem."\n".$closingMenu,
-                    $closingMenuPosition,
-                    strlen($closingMenu)
-                );
+        $candidates = array_filter([
+            $configuredPath ? resource_path($configuredPath) : null,
+            resource_path('views/shared/partials/sidenav.blade.php'),
+            resource_path('views/layouts/partials/sidenav.blade.php'),
+            resource_path('views/partials/sidenav.blade.php'),
+        ]);
+
+        foreach ($candidates as $candidate) {
+            if (file_exists($candidate)) {
+                return $candidate;
             }
         }
 
-        file_put_contents($layoutFile, $layoutContent);
+        return null;
+    }
+
+    protected function detectMenuItemIndent(string $content, int $fallbackSpaces = 16): string
+    {
+        if (preg_match('/^([ \t]*)<li class="side-nav-item">/m', $content, $matches)) {
+            return $matches[1];
+        }
+
+        return str_repeat(' ', $fallbackSpaces);
+    }
+
+    protected function insertSidenavMenuItem(string $layoutContent, string $menuItem): string
+    {
+        $patterns = [
+            '/[ \t]*<!--\s*crud-generator-sidenav-items\s*-->/',
+            '/[ \t]*<!--\s*sidebar-items\s*-->/',
+            '/[ \t]*<li class="side-nav-title[^>]*data-lang="custom-pages"[^>]*>.*?<\/li>/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $layoutContent, $match, PREG_OFFSET_CAPTURE)) {
+                return substr_replace($layoutContent, $menuItem."\n", $match[0][1], 0);
+            }
+        }
+
+        // Sisipkan tepat sebelum </ul> penutup <ul class="side-nav">, bukan di akhir file.
+        if (preg_match('/<ul class="side-nav">/', $layoutContent, $openMatch, PREG_OFFSET_CAPTURE)) {
+            $searchFrom = $openMatch[0][1] + strlen($openMatch[0][0]);
+            $closingPosition = strpos($layoutContent, '</ul>', $searchFrom);
+
+            if ($closingPosition !== false) {
+                $lineStart = strrpos(substr($layoutContent, 0, $closingPosition), "\n");
+                $insertAt = $lineStart === false ? $closingPosition : $lineStart + 1;
+
+                return substr_replace($layoutContent, $menuItem."\n", $insertAt, 0);
+            }
+        }
+
+        // Last resort yang aman: tetap di dalam <ul class="side-nav">, tidak pernah di luar tag manapun.
+        if (preg_match('/<ul class="side-nav">/', $layoutContent, $match, PREG_OFFSET_CAPTURE)) {
+            $insertAt = $match[0][1] + strlen($match[0][0]);
+
+            return substr_replace($layoutContent, "\n".$menuItem, $insertAt, 0);
+        }
+
+        return $layoutContent;
     }
 
     protected function getSidebarLabel(string $name): string
