@@ -906,7 +906,7 @@ PHP
         $methodBlocks = [];
 
         foreach ($matches[0] as $match) {
-             $methodStart = (int) $match[1];
+            $methodStart = (int) $match[1];
             $openBrace = strpos($controllerContent, '{', $methodStart);
 
             if ($openBrace === false) {
