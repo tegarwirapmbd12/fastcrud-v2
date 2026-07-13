@@ -805,7 +805,7 @@ PHP
         ]);
 
         '.$modelNamespace.'::create($validated);
-        return redirect()->route(\'backend.'.Str::pluralStudly(Str::snake($name)).'.index\');
+        return redirect()->route(\''.Str::pluralStudly(Str::snake($name)).'.index\');
     }'."\n";
             }
 
