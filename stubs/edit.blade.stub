@@ -20,7 +20,7 @@
                                 <h4 class="card-title">Edit {{ NamaIndonesia }}</h4>
                             </div>
                             <div class="card-body">
-                                <form action="{{ route('{{ plural_route_name }}.update', $item->id) }}" method="POST">
+                                <form action="{{ route('{{ plural_route_name }}.update', $item->uuid) }}" method="POST">
                                     @csrf
                                     @method('PUT')
 {{ form_fields }}
