@@ -421,6 +421,7 @@ PHP
             '{{ name }}' => $name,
             '{{ Name }}' => ucfirst($name),
             '{{ plural_route_name }}' => $pluralRouteName,
+            '{{ NamaIndonesia }}'     => $namaIndonesia,
         ];
 
         $this->generateViewFromStub($stubPath.'index.blade.stub', $viewsDirectory.'/index.blade.php', $replacements, $fieldsArray);
@@ -650,30 +651,46 @@ PHP
     protected function replaceFieldPlaceholders(string $content, array $fields): string
     {
         $tableHeaders = '';
-        $tableData = '';
-        $formFields = '';
+        $tableData    = '';
+        $formFields   = '';
+        $searchFields = '';
+
+        $isEditStub = str_contains($content, "@method('PUT')");
 
         foreach ($fields as $field) {
             $fieldName = $field['name'];
-            $tableHeaders .= "                <th>{{ ucfirst('{$fieldName}') }}</th>\n";
-            $tableData .= "                <td>{{ \$item->{$fieldName} }}</td>\n";
 
-            $formFields .= "        <div class=\"form-group\">\n";
-            $formFields .= "            <label for=\"{$fieldName}\">{{ ucfirst('{$fieldName}') }}</label>\n";
-            $formFields .= sprintf('            <input type="text" class="form-control" name="%s" id="%s"', $fieldName, $fieldName);
+            // Table headers
+            $tableHeaders .= "                                                <th>{{ ucfirst('{$fieldName}') }}</th>\n";
 
-            if (str_contains($content, 'old(')) {
-                $formFields .= sprintf(" value=\"{{ old('%s', \$item->%s ?? '') }}\"", $fieldName, $fieldName);
+            // Table data
+            $tableData .= "                                                    <td>{{ \$item->{$fieldName} }}</td>\n";
+
+            // Form fields
+            $formFields .= "                                    <div class=\"form-group mb-2\">\n";
+            $formFields .= "                                        <label for=\"{$fieldName}\">{{ ucfirst('{$fieldName}') }}</label>\n";
+            $formFields .= "                                        <input type=\"text\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"";
+
+            if ($isEditStub) {
+                $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
             }
 
             $formFields .= ">\n";
-            $formFields .= "        </div>\n";
-        }
+            $formFields .= "                                    </div>\n";
+
+            // Search fields (untuk index)
+            $searchFields .= "                                    <div class=\"col-md-6\">\n";
+            $searchFields .= "                                        <label class=\"form-label\">{{ ucfirst('{$fieldName}') }}</label>\n";
+            $searchFields .= "                                        <input type=\"text\" name=\"search_{$fieldName}\" class=\"form-control me-2\" placeholder=\"Cari berdasarkan {$fieldName}...\" value=\"{{ request('search_{$fieldName}') }}\">\n";
+            $searchFields .= "                                    </div>\n";
+        } 
 
         $content = str_replace('{{ table_headers }}', trim($tableHeaders), $content);
-        $content = str_replace('{{ table_data }}', trim($tableData), $content);
+        $content = str_replace('{{ table_data }}',    trim($tableData),    $content);
+        $content = str_replace('{{ form_fields }}',   trim($formFields),   $content);
+        $content = str_replace('{{ search_fields }}', trim($searchFields), $content);
 
-        return str_replace('{{ form_fields }}', trim($formFields), $content);
+        return $content;  
     }
 
     protected function parseFields(string $fields): array
