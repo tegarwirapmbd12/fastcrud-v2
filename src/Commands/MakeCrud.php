@@ -73,6 +73,8 @@ class MakeCrud extends Command
             $fields = $this->askForFields();
         }
 
+        $migrationFields = ''; // ← inisialisasi di luar blok if
+
         if (config('crud_generator.generate_migration', true)) {
             $migrationFields = $this->generateMigrationFields($fields);
         }
@@ -416,6 +418,7 @@ PHP
 
         $stubPath = __DIR__.'/../../stubs/';
         $pluralRouteName = Str::pluralStudly(Str::snake($name));
+        $namaIndonesia = $sidenav['name'];
 
         $replacements = [
             '{{ name }}' => $name,
@@ -553,7 +556,7 @@ PHP
 
         foreach ($patterns as $pattern) {
             if (preg_match($pattern, $layoutContent, $match, PREG_OFFSET_CAPTURE)) {
-                return substr_replace($layoutContent, $menuItem."\n", $match[0][1], 0);
+                return substr_replace($layoutContent, $menuItem."\n", (int) $match[0][1], 0);
             }
         }
 
@@ -903,7 +906,7 @@ PHP
         $methodBlocks = [];
 
         foreach ($matches[0] as $match) {
-            $methodStart = $match[1];
+             $methodStart = (int) $match[1];
             $openBrace = strpos($controllerContent, '{', $methodStart);
 
             if ($openBrace === false) {
