@@ -763,7 +763,7 @@ PHP
                 $newMethods .= '    public function index()
     {
         $items = '.$modelNamespace.'::all();
-        return view(\''.Str::snake($name).'.index\', compact(\'items\'));
+        return view(\'backend.'.Str::snake($name).'.index\', compact(\'items\'));
     }'."\n";
             }
 
@@ -771,7 +771,7 @@ PHP
                 $newMethods .= '
     public function create()
     {
-        return view(\''.Str::snake($name).'.create\');
+        return view(\'backend.'.Str::snake($name).'.create\');
     }'."\n";
             }
 
@@ -785,7 +785,7 @@ PHP
         ]);
 
         '.$modelNamespace.'::create($validated);
-        return redirect()->route(\''.Str::pluralStudly(Str::snake($name)).'.index\');
+        return redirect()->route(\'backend.'.Str::pluralStudly(Str::snake($name)).'.index\');
     }'."\n";
             }
 
@@ -818,7 +818,7 @@ PHP
     public function edit($id)
     {
         $item = '.$modelNamespace.'::findOrFail($id);
-        return view(\''.Str::snake($name).'.edit\', compact(\'item\'));
+        return view(\'backend.'.Str::snake($name).'.edit\', compact(\'item\'));
     }'."\n";
             }
 
