@@ -408,7 +408,7 @@ PHP
     protected function createBladeViews(string $name, string $fields, array $sidenav): void
     {
         $fieldsArray = $this->parseFields($fields);
-        $viewsDirectory = resource_path('views/backend'.Str::snake($name));
+        $viewsDirectory = resource_path('views/backend/'.Str::snake($name));
 
         if (! is_dir($viewsDirectory)) {
             mkdir($viewsDirectory, 0755, true);
