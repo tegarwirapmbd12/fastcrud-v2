@@ -86,6 +86,7 @@ class MakeCrud extends Command
             ]);
 
             $this->addFillableToModel($name, $fields);
+            $this->addRouteKeyNameToModel($name);
 
             if (config('crud_generator.soft_deletes', false)) {
                 $this->addSoftDeletesToModel($name);
@@ -276,6 +277,39 @@ class MakeCrud extends Command
                 file_put_contents($modelFile, $modelContent);
             }
         }
+    }
+
+    protected function addRouteKeyNameToModel(string $name): void
+    {
+        $modelFile = app_path(sprintf('Models/%s.php', $name));
+
+        if (! file_exists($modelFile)) {
+            return;
+        }
+
+        $modelContent = (string) file_get_contents($modelFile);
+
+        if (str_contains($modelContent, 'getRouteKeyName')) {
+            return;
+        }
+
+        $routeKeyMethod = <<<'PHP'
+
+        public function getRouteKeyName(): string
+        {
+            return 'uuid';
+        }
+
+    PHP;
+
+        $classEndPos = strrpos($modelContent, '}');
+        if ($classEndPos === false) {
+            return;
+        }
+
+        $modelContent = substr_replace($modelContent, $routeKeyMethod, $classEndPos, 0);
+        file_put_contents($modelFile, $modelContent);
+        $this->info(sprintf('getRouteKeyName() added to %s model.', $name));
     }
 
     protected function addUuidGenerationToModelContent(string $modelContent): string
@@ -818,7 +852,7 @@ PHP
             '.implode(",\n            ", array_map(fn (string $field): string => sprintf("'%s' => '%s'", $field, $validationRules[$field]), $fieldNames)).'
         ]);
 
-        $item = '.$modelNamespace.'::findOrFail($uuid);
+        $item = '.$modelNamespace.'::where(\'uuid\', $uuid)->firstOrFail();
         $item->update($validated);
         return redirect()->route(\''.Str::pluralStudly(Str::snake($name)).'.index\');
     }'."\n";
@@ -828,7 +862,7 @@ PHP
                 $newMethods .= '
     public function show($uuid)
     {
-        $item = '.$modelNamespace.'::findOrFail($uuid);
+        $item = '.$modelNamespace.'::where(\'uuid\', $uuid)->firstOrFail();
         return view(\'backend.'.Str::snake($name).'.show\', compact(\'item\'));
     }'."\n";
             }
@@ -837,7 +871,7 @@ PHP
                 $newMethods .= '
     public function edit($uuid)
     {
-        $item = '.$modelNamespace.'::findOrFail($uuid);
+        $item = '.$modelNamespace.'::where(\'uuid\', $uuid)->firstOrFail();
         return view(\'backend.'.Str::snake($name).'.edit\', compact(\'item\'));
     }'."\n";
             }
@@ -846,7 +880,7 @@ PHP
                 $newMethods .= '
     public function destroy($uuid)
     {
-        $item = '.$modelNamespace.'::findOrFail($uuid);
+        $item = '.$modelNamespace.'::where(\'uuid\', $uuid)->firstOrFail();
         $item->delete();
         return redirect()->route(\''.Str::pluralStudly(Str::snake($name)).'.index\');
     }'."\n";
@@ -1016,7 +1050,12 @@ PHP
         $controllerClass = sprintf('\App\Http\Controllers\%sController', $name);
 
         // Define the resource route string
-        $resourceRoute = sprintf("Route::resource('%s', %s::class);", Str::pluralStudly(Str::snake($name)), $controllerClass);
+        $resourceRoute = sprintf(
+            "Route::resource('%s', %s::class)\n    ->parameters(['%s' => 'uuid'])\n    ->where(['uuid' => '[0-9a-f-]{36}']);",
+            Str::pluralStudly(Str::snake($name)),
+            $controllerClass,
+            Str::pluralStudly(Str::snake($name))
+        );
 
         // Check if the route already exists
         if (file_exists($routeFile)) {
