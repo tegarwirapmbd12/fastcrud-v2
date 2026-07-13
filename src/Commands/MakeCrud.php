@@ -376,9 +376,9 @@ class {{ name }}Repository
         return {{ name }}::all();
     }
 
-    public function find(int|string $id): {{ name }}
+    public function find(int|string $uuid): {{ name }}
     {
-        return {{ name }}::findOrFail($id);
+        return {{ name }}::findOrFail($uuid);
     }
 
     public function create(array $data): {{ name }}
@@ -386,17 +386,17 @@ class {{ name }}Repository
         return {{ name }}::create($data);
     }
 
-    public function update(int|string $id, array $data): {{ name }}
+    public function update(int|string $uuid, array $data): {{ name }}
     {
-        $item = $this->find($id);
+        $item = $this->find($uuid);
         $item->update($data);
 
         return $item;
     }
 
-    public function delete(int|string $id): bool
+    public function delete(int|string $uuid): bool
     {
-        return (bool) $this->find($id)->delete();
+        return (bool) $this->find($uuid)->delete();
     }
 }
 PHP
@@ -812,13 +812,13 @@ PHP
             if (! in_array('update', $existingMethods)) {
                 $validationRules = $this->getValidationRules($fieldsArray);
                 $newMethods .= '
-    public function update(Request $request, $id)
+    public function update(Request $request, $uuid)
     {
         $validated = $request->validate([
             '.implode(",\n            ", array_map(fn (string $field): string => sprintf("'%s' => '%s'", $field, $validationRules[$field]), $fieldNames)).'
         ]);
 
-        $item = '.$modelNamespace.'::findOrFail($id);
+        $item = '.$modelNamespace.'::findOrFail($uuid);
         $item->update($validated);
         return redirect()->route(\''.Str::pluralStudly(Str::snake($name)).'.index\');
     }'."\n";
@@ -826,27 +826,27 @@ PHP
 
             if (! in_array('show', $existingMethods)) {
                 $newMethods .= '
-    public function show($id)
+    public function show($uuid)
     {
-        $item = '.$modelNamespace.'::findOrFail($id);
-        return view(\''.Str::snake($name).'.show\', compact(\'item\'));
+        $item = '.$modelNamespace.'::findOrFail($uuid);
+        return view(\'backend.'.Str::snake($name).'.show\', compact(\'item\'));
     }'."\n";
             }
 
             if (! in_array('edit', $existingMethods)) {
                 $newMethods .= '
-    public function edit($id)
+    public function edit($uuid)
     {
-        $item = '.$modelNamespace.'::findOrFail($id);
+        $item = '.$modelNamespace.'::findOrFail($uuid);
         return view(\'backend.'.Str::snake($name).'.edit\', compact(\'item\'));
     }'."\n";
             }
 
             if (! in_array('destroy', $existingMethods)) {
                 $newMethods .= '
-    public function destroy($id)
+    public function destroy($uuid)
     {
-        $item = '.$modelNamespace.'::findOrFail($id);
+        $item = '.$modelNamespace.'::findOrFail($uuid);
         $item->delete();
         return redirect()->route(\''.Str::pluralStudly(Str::snake($name)).'.index\');
     }'."\n";
@@ -1062,13 +1062,13 @@ PHP
     }
 ";
             $updateMethod = "
-    public function update(Request \$request, \$id)
+    public function update(Request \$request, \$uuid)
     {
         \$validated = \$request->validate([
             {$validationArray}
         ]);
 
-        \$item = {$modelNamespace}::findOrFail(\$id);
+        \$item = {$modelNamespace}::findOrFail(\$uuid);
         \$item->update(\$validated);
         return response()->json(\$item);
     }
