@@ -263,10 +263,20 @@ class MakeCrud extends Command
             $modelContent = (string) file_get_contents($modelFile);
             $originalModelContent = $modelContent;
 
+            // ← tambahkan HasFactory use statement jika belum ada
+            if (! str_contains($modelContent, 'HasFactory')) {
+                $modelContent = str_replace(
+                    'use Illuminate\Database\Eloquent\Model;',
+                    "use Illuminate\Database\Eloquent\Factories\HasFactory;\nuse Illuminate\Database\Eloquent\Model;",
+                    $modelContent
+                );
+            }
+
             if (! preg_match('/protected\s+\$fillable\s*=\s*\[/', $modelContent)) {
+                // ← ubah regex agar support class dengan atau tanpa { di baris yang sama
                 $modelContent = preg_replace(
-                    '/class\s+'.preg_quote($name, '/').'\s*extends\s+Model\s*{/',
-                    'class '.$name.' extends Model {'."\n\n    protected \$fillable = ['{$fillableFields}'];\n",
+                    '/class\s+'.preg_quote($name, '/').'\s*extends\s+Model\s*\{?/',
+                    'class '.$name.' extends Model {'."\n\n    use HasFactory;\n\n    protected \$fillable = ['{$fillableFields}'];\n",
                     $modelContent
                 );
             }
@@ -1046,29 +1056,28 @@ PHP
 
     protected function addResourceRoute(string $name): void
     {
-        $routeFile = base_path('routes/web.php');
+        $routeFile = base_path('routes/fastcrud_web_generator.php'); 
         $controllerClass = sprintf('\App\Http\Controllers\%sController', $name);
 
-        // Define the resource route string
         $resourceRoute = sprintf(
             "Route::resource('%s', %s::class)\n    ->parameters(['%s' => 'uuid'])\n    ->where(['uuid' => '[0-9a-f-]{36}']);",
             Str::pluralStudly(Str::snake($name)),
             $controllerClass,
             Str::pluralStudly(Str::snake($name))
         );
+        if (! file_exists($routeFile)) {
+            $header = "<?php\n\nuse Illuminate\Support\Facades\Route;\n\n";
+            file_put_contents($routeFile, $header);
+            $this->info('File routes/fastcrud_web_generator.php dibuat.');
+        }
 
-        // Check if the route already exists
-        if (file_exists($routeFile)) {
-            $routesContent = file_get_contents($routeFile);
+        $routesContent = file_get_contents($routeFile);
 
-            // Add the resource route if it doesn't already exist
-            if (! str_contains($routesContent, $resourceRoute)) {
-                // Append the new resource route to the file
-                file_put_contents($routeFile, "\n".$resourceRoute."\n", FILE_APPEND);
-                $this->info(sprintf('Resource route for %s added to routes/web.php.', $name));
-            } else {
-                $this->warn(sprintf('Resource route for %s already exists in routes/web.php.', $name));
-            }
+        if (! str_contains($routesContent, $resourceRoute)) {
+            file_put_contents($routeFile, "\n".$resourceRoute."\n", FILE_APPEND);
+            $this->info(sprintf('Resource route untuk %s ditambahkan ke routes/fastcrud_web_generator.php.', $name));
+        } else {
+            $this->warn(sprintf('Resource route untuk %s sudah ada di routes/fastcrud_web_generator.php.', $name));
         }
     }
 
