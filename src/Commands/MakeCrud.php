@@ -1056,7 +1056,7 @@ PHP
 
     protected function addResourceRoute(string $name): void
     {
-        $routeFile = base_path('routes/fastcrud_web_generator.php'); 
+        $routeFile = base_path('routes/fastcrud_web_generator.php');
         $controllerClass = sprintf('\App\Http\Controllers\%sController', $name);
 
         $resourceRoute = sprintf(
