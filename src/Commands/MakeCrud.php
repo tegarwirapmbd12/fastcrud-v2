@@ -41,17 +41,8 @@ class MakeCrud extends Command
         'longText',
         'integer',
         'bigInteger',
-        'smallInteger',
-        'tinyInteger',
         'boolean',
         'date',
-        'dateTime',
-        'timestamp',
-        'decimal',
-        'float',
-        'double',
-        'json',
-        'jsonb',
     ];
 
     public function handle(): void
@@ -698,14 +689,17 @@ PHP
     protected function replaceFieldPlaceholders(string $content, array $fields): string
     {
         $tableHeaders = '';
-        $tableData = '';
-        $formFields = '';
+        $tableData    = '';
+        $formFields   = '';
         $searchFields = '';
 
         $isEditStub = str_contains($content, "@method('PUT')");
 
         foreach ($fields as $field) {
             $fieldName = $field['name'];
+            $fieldType = $field['type'];
+            $isNullable = $field['nullable'] ?? false;
+            $required = $isNullable ? '' : ' required';
 
             // Table headers
             $tableHeaders .= "                                                <th>{{ ucfirst('{$fieldName}') }}</th>\n";
@@ -713,16 +707,66 @@ PHP
             // Table data
             $tableData .= "                                                    <td>{{ \$item->{$fieldName} }}</td>\n";
 
-            // Form fields
+            // Form fields — generate input sesuai tipe
             $formFields .= "                                    <div class=\"form-group mb-2\">\n";
             $formFields .= "                                        <label for=\"{$fieldName}\">{{ ucfirst('{$fieldName}') }}</label>\n";
-            $formFields .= "                                        <input type=\"text\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"";
 
-            if ($isEditStub) {
-                $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
+            switch ($fieldType) {
+                case 'text':
+                case 'longText':
+                    $formFields .= "                                        <textarea class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\" rows=\"3\"{$required}";
+                    if ($isEditStub) {
+                        $formFields .= ">{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}</textarea>\n";
+                    } else {
+                        $formFields .= ">{{ old('{$fieldName}') }}</textarea>\n";
+                    }
+                    break;
+
+                case 'boolean':
+                    $formFields .= "                                        <select class=\"form-select\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}>\n";
+                    $formFields .= "                                            <option value=\"\">-- Pilih --</option>\n";
+                    if ($isEditStub) {
+                        $formFields .= "                                            <option value=\"1\" {{ old('{$fieldName}', \$item->{$fieldName} ?? '') == '1' ? 'selected' : '' }}>Ya</option>\n";
+                        $formFields .= "                                            <option value=\"0\" {{ old('{$fieldName}', \$item->{$fieldName} ?? '') == '0' ? 'selected' : '' }}>Tidak</option>\n";
+                    } else {
+                        $formFields .= "                                            <option value=\"1\" {{ old('{$fieldName}') == '1' ? 'selected' : '' }}>Ya</option>\n";
+                        $formFields .= "                                            <option value=\"0\" {{ old('{$fieldName}') == '0' ? 'selected' : '' }}>Tidak</option>\n";
+                    }
+                    $formFields .= "                                        </select>\n";
+                    break;
+
+                case 'date':
+                    $formFields .= "                                        <input type=\"date\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
+                    if ($isEditStub) {
+                        $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
+                    } else {
+                        $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
+                    }
+                    $formFields .= ">\n";
+                    break;
+
+                case 'integer':
+                case 'bigInteger':
+                    $formFields .= "                                        <input type=\"number\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
+                    if ($isEditStub) {
+                        $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
+                    } else {
+                        $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
+                    }
+                    $formFields .= ">\n";
+                    break;
+
+                default: // string
+                    $formFields .= "                                        <input type=\"text\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
+                    if ($isEditStub) {
+                        $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
+                    } else {
+                        $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
+                    }
+                    $formFields .= ">\n";
+                    break;
             }
 
-            $formFields .= ">\n";
             $formFields .= "                                    </div>\n";
 
             // Search fields (untuk index)
@@ -733,8 +777,8 @@ PHP
         }
 
         $content = str_replace('{{ table_headers }}', trim($tableHeaders), $content);
-        $content = str_replace('{{ table_data }}', trim($tableData), $content);
-        $content = str_replace('{{ form_fields }}', trim($formFields), $content);
+        $content = str_replace('{{ table_data }}',    trim($tableData),    $content);
+        $content = str_replace('{{ form_fields }}',   trim($formFields),   $content);
         $content = str_replace('{{ search_fields }}', trim($searchFields), $content);
 
         return $content;

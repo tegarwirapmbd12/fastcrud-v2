@@ -23,8 +23,8 @@ return [
         'integer' => 'required|integer',
         'boolean' => 'boolean',
         'date' => 'required|date',
-        'dateTime' => 'required|date',
-        'timestamp' => 'required|date',
-        'email' => 'required|email',
+        // 'dateTime' => 'required|date',
+        // 'timestamp' => 'required|date',
+        // 'email' => 'required|email',
     ],
 ];
