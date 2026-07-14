@@ -687,117 +687,117 @@ PHP
     }
 
     protected function replaceFieldPlaceholders(string $content, array $fields): string
-{
-    $tableHeaders = '';
-    $tableData    = '';
-    $formFields   = '';
-    $searchFields = '';
+    {
+        $tableHeaders = '';
+        $tableData = '';
+        $formFields = '';
+        $searchFields = '';
 
-    $isEditStub = str_contains($content, "@method('PUT')");
+        $isEditStub = str_contains($content, "@method('PUT')");
 
-    foreach ($fields as $field) {
-        $fieldName    = $field['name'];
-        $fieldType    = $field['type'];
-        $isNullable   = $field['nullable'] ?? false;
-        $required     = $isNullable ? '' : ' required';
-        $requiredLabel = $isNullable ? '' : ' <span class="text-danger">*</span>'; // ← tambahkan ini
+        foreach ($fields as $field) {
+            $fieldName = $field['name'];
+            $fieldType = $field['type'];
+            $isNullable = $field['nullable'] ?? false;
+            $required = $isNullable ? '' : ' required';
+            $requiredLabel = $isNullable ? '' : ' <span class="text-danger">*</span>'; // ← tambahkan ini
 
-        // Table headers
-        $tableHeaders .= "                                                <th>{{ ucfirst('{$fieldName}') }}</th>\n";
+            // Table headers
+            $tableHeaders .= "                                                <th>{{ ucfirst('{$fieldName}') }}</th>\n";
 
-        // Table data
-        $tableData .= "                                                    <td>{{ \$item->{$fieldName} }}</td>\n";
+            // Table data
+            $tableData .= "                                                    <td>{{ \$item->{$fieldName} }}</td>\n";
 
-        // Form fields — generate input sesuai tipe
-        $formFields .= "                                    <div class=\"form-group mb-2\">\n";
-        $formFields .= "                                        <label for=\"{$fieldName}\">{{ ucfirst('{$fieldName}') }}{$requiredLabel}</label>\n"; // ← ubah ini
+            // Form fields — generate input sesuai tipe
+            $formFields .= "                                    <div class=\"form-group mb-2\">\n";
+            $formFields .= "                                        <label for=\"{$fieldName}\">{{ ucfirst('{$fieldName}') }}{$requiredLabel}</label>\n"; // ← ubah ini
 
-        switch ($fieldType) {
-            case 'text':
-            case 'longText':
-                $formFields .= "                                        <textarea class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\" rows=\"3\"{$required}";
-                if ($isEditStub) {
-                    $formFields .= ">{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}</textarea>\n";
-                } else {
-                    $formFields .= ">{{ old('{$fieldName}') }}</textarea>\n";
-                }
-                break;
+            switch ($fieldType) {
+                case 'text':
+                case 'longText':
+                    $formFields .= "                                        <textarea class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\" rows=\"3\"{$required}";
+                    if ($isEditStub) {
+                        $formFields .= ">{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}</textarea>\n";
+                    } else {
+                        $formFields .= ">{{ old('{$fieldName}') }}</textarea>\n";
+                    }
+                    break;
 
-            case 'boolean':
-                $formFields .= "                                        <select class=\"form-select\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}>\n";
-                $formFields .= "                                            <option value=\"\">-- Pilih --</option>\n";
-                if ($isEditStub) {
-                    $formFields .= "                                            <option value=\"1\" {{ old('{$fieldName}', \$item->{$fieldName} ?? '') == '1' ? 'selected' : '' }}>Ya</option>\n";
-                    $formFields .= "                                            <option value=\"0\" {{ old('{$fieldName}', \$item->{$fieldName} ?? '') == '0' ? 'selected' : '' }}>Tidak</option>\n";
-                } else {
-                    $formFields .= "                                            <option value=\"1\" {{ old('{$fieldName}') == '1' ? 'selected' : '' }}>Ya</option>\n";
-                    $formFields .= "                                            <option value=\"0\" {{ old('{$fieldName}') == '0' ? 'selected' : '' }}>Tidak</option>\n";
-                }
-                $formFields .= "                                        </select>\n";
-                break;
+                case 'boolean':
+                    $formFields .= "                                        <select class=\"form-select\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}>\n";
+                    $formFields .= "                                            <option value=\"\">-- Pilih --</option>\n";
+                    if ($isEditStub) {
+                        $formFields .= "                                            <option value=\"1\" {{ old('{$fieldName}', \$item->{$fieldName} ?? '') == '1' ? 'selected' : '' }}>Ya</option>\n";
+                        $formFields .= "                                            <option value=\"0\" {{ old('{$fieldName}', \$item->{$fieldName} ?? '') == '0' ? 'selected' : '' }}>Tidak</option>\n";
+                    } else {
+                        $formFields .= "                                            <option value=\"1\" {{ old('{$fieldName}') == '1' ? 'selected' : '' }}>Ya</option>\n";
+                        $formFields .= "                                            <option value=\"0\" {{ old('{$fieldName}') == '0' ? 'selected' : '' }}>Tidak</option>\n";
+                    }
+                    $formFields .= "                                        </select>\n";
+                    break;
 
-            case 'date':
-                $formFields .= "                                        <input type=\"date\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
-                if ($isEditStub) {
-                    $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
-                } else {
-                    $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
-                }
-                $formFields .= ">\n";
-                break;
+                case 'date':
+                    $formFields .= "                                        <input type=\"date\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
+                    if ($isEditStub) {
+                        $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
+                    } else {
+                        $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
+                    }
+                    $formFields .= ">\n";
+                    break;
 
-            case 'integer':
-                $formFields .= "                                        <input type=\"number\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
-                if ($isEditStub) {
-                    $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
-                } else {
-                    $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
-                }
-                $formFields .= ">\n";
-                break;
-            case 'bigInteger':
-                // bigInteger diasumsikan sebagai foreign key → form-select
-                $formFields .= "                                        <select class=\"form-select\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}>\n";
-                $formFields .= "                                            <option value=\"\">-- Pilih --</option>\n";
-                if ($isEditStub) {
-                    $formFields .= "                                            {{-- @foreach(\$options_{$fieldName} as \$opt) --}}\n";
-                    $formFields .= "                                            {{-- <option value=\"{{ \$opt->id }}\" {{ old('{$fieldName}', \$item->{$fieldName} ?? '') == \$opt->id ? 'selected' : '' }}>{{ \$opt->name }}</option> --}}\n";
-                    $formFields .= "                                            {{-- @endforeach --}}\n";
-                } else {
-                    $formFields .= "                                            {{-- @foreach(\$options_{$fieldName} as \$opt) --}}\n";
-                    $formFields .= "                                            {{-- <option value=\"{{ \$opt->id }}\" {{ old('{$fieldName}') == \$opt->id ? 'selected' : '' }}>{{ \$opt->name }}</option> --}}\n";
-                    $formFields .= "                                            {{-- @endforeach --}}\n";
-                }
-                $formFields .= "                                        </select>\n";
-                break;    
+                case 'integer':
+                    $formFields .= "                                        <input type=\"number\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
+                    if ($isEditStub) {
+                        $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
+                    } else {
+                        $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
+                    }
+                    $formFields .= ">\n";
+                    break;
+                case 'bigInteger':
+                    // bigInteger diasumsikan sebagai foreign key → form-select
+                    $formFields .= "                                        <select class=\"form-select\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}>\n";
+                    $formFields .= "                                            <option value=\"\">-- Pilih --</option>\n";
+                    if ($isEditStub) {
+                        $formFields .= "                                            {{-- @foreach(\$options_{$fieldName} as \$opt) --}}\n";
+                        $formFields .= "                                            {{-- <option value=\"{{ \$opt->id }}\" {{ old('{$fieldName}', \$item->{$fieldName} ?? '') == \$opt->id ? 'selected' : '' }}>{{ \$opt->name }}</option> --}}\n";
+                        $formFields .= "                                            {{-- @endforeach --}}\n";
+                    } else {
+                        $formFields .= "                                            {{-- @foreach(\$options_{$fieldName} as \$opt) --}}\n";
+                        $formFields .= "                                            {{-- <option value=\"{{ \$opt->id }}\" {{ old('{$fieldName}') == \$opt->id ? 'selected' : '' }}>{{ \$opt->name }}</option> --}}\n";
+                        $formFields .= "                                            {{-- @endforeach --}}\n";
+                    }
+                    $formFields .= "                                        </select>\n";
+                    break;
 
-            default: // string
-                $formFields .= "                                        <input type=\"text\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
-                if ($isEditStub) {
-                    $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
-                } else {
-                    $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
-                }
-                $formFields .= ">\n";
-                break;
+                default: // string
+                    $formFields .= "                                        <input type=\"text\" class=\"form-control\" name=\"{$fieldName}\" id=\"{$fieldName}\"{$required}";
+                    if ($isEditStub) {
+                        $formFields .= " value=\"{{ old('{$fieldName}', \$item->{$fieldName} ?? '') }}\"";
+                    } else {
+                        $formFields .= " value=\"{{ old('{$fieldName}') }}\"";
+                    }
+                    $formFields .= ">\n";
+                    break;
+            }
+
+            $formFields .= "                                    </div>\n";
+
+            // Search fields (untuk index)
+            $searchFields .= "                                    <div class=\"col-md-6\">\n";
+            $searchFields .= "                                        <label class=\"form-label\">{{ ucfirst('{$fieldName}') }}</label>\n";
+            $searchFields .= "                                        <input type=\"text\" name=\"search_{$fieldName}\" class=\"form-control me-2\" placeholder=\"Cari berdasarkan {$fieldName}...\" value=\"{{ request('search_{$fieldName}') }}\">\n";
+            $searchFields .= "                                    </div>\n";
         }
 
-        $formFields .= "                                    </div>\n";
+        $content = str_replace('{{ table_headers }}', trim($tableHeaders), $content);
+        $content = str_replace('{{ table_data }}', trim($tableData), $content);
+        $content = str_replace('{{ form_fields }}', trim($formFields), $content);
+        $content = str_replace('{{ search_fields }}', trim($searchFields), $content);
 
-        // Search fields (untuk index)
-        $searchFields .= "                                    <div class=\"col-md-6\">\n";
-        $searchFields .= "                                        <label class=\"form-label\">{{ ucfirst('{$fieldName}') }}</label>\n";
-        $searchFields .= "                                        <input type=\"text\" name=\"search_{$fieldName}\" class=\"form-control me-2\" placeholder=\"Cari berdasarkan {$fieldName}...\" value=\"{{ request('search_{$fieldName}') }}\">\n";
-        $searchFields .= "                                    </div>\n";
+        return $content;
     }
-
-    $content = str_replace('{{ table_headers }}', trim($tableHeaders), $content);
-    $content = str_replace('{{ table_data }}',    trim($tableData),    $content);
-    $content = str_replace('{{ form_fields }}',   trim($formFields),   $content);
-    $content = str_replace('{{ search_fields }}', trim($searchFields), $content);
-
-    return $content;
-}
 
     protected function parseFields(string $fields): array
     {
