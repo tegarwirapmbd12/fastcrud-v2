@@ -689,8 +689,8 @@ PHP
     protected function replaceFieldPlaceholders(string $content, array $fields): string
     {
         $tableHeaders = '';
-        $tableData    = '';
-        $formFields   = '';
+        $tableData = '';
+        $formFields = '';
         $searchFields = '';
 
         $isEditStub = str_contains($content, "@method('PUT')");
@@ -777,8 +777,8 @@ PHP
         }
 
         $content = str_replace('{{ table_headers }}', trim($tableHeaders), $content);
-        $content = str_replace('{{ table_data }}',    trim($tableData),    $content);
-        $content = str_replace('{{ form_fields }}',   trim($formFields),   $content);
+        $content = str_replace('{{ table_data }}', trim($tableData), $content);
+        $content = str_replace('{{ form_fields }}', trim($formFields), $content);
         $content = str_replace('{{ search_fields }}', trim($searchFields), $content);
 
         return $content;
